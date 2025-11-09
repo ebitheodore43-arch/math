@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basic Mathematics Quiz</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        h1 {
+            color: #0056b3;
+            text-align: center;
+        }
+        #quiz-container {
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 700px;
+            padding: 30px;
+            box-sizing: border-box;
+        }
+        #progress-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        #progress-bar {
+            width: 0%;
+            height: 10px;
+            background-color: #007bff;
+            border-radius: 5px;
+            transition: width 0.3s ease;
+        }
+        #question-number {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 15px;
+        }
+        #question-text {
+            font-size: 1.3em;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+        #options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .option-btn {
+            display: block;
+            width: 100%;
+            padding: 15px 20px;
+            font-size: 1em;
+            text-align: left;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+        }
+        .option-btn:not(:disabled):hover {
+            background-color: #e9ecef;
+            border-color: #bbb;
+        }
+        .option-btn.correct {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+            font-weight: bold;
+        }
+        .option-btn.incorrect {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+            font-weight: bold;
+        }
+        .option-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.9;
+        }
+        #feedback {
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-top: 15px;
+            height: 20px;
+        }
+        #next-btn {
+            display: none; /* Hidden by default */
+            width: 100%;
+            padding: 15px;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background-color 0.2s ease;
+        }
+        #next-btn:hover {
+            background-color: #0056b3;
+        }
+        #results-container {
+            text-align: center;
+        }
+        #results-container h2 {
+            font-size: 1.8em;
+            color: #0056b3;
+        }
+        #results-container p {
+            font-size: 1.2em;
+        }
+        #restart-btn {
+            padding: 15px 30px;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #fff;
+            background-color: #28a745;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background-color 0.2s ease;
+        }
+        #restart-btn:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="quiz-container">
+        <h1>Basic Mathematics Quiz</h1>
+        
+        <div id="quiz-content">
+            <div id="progress-container">
+                <div id="progress-bar"></div>
+            </div>
+            <div id="question-number"></div>
+            <div id="question-text"></div>
+            <div id="options-container"></div>
+            <div id="feedback"></div>
+            <button id="next-btn">Next Question</button>
+        </div>
+
+        <div id="results-container" style="display: none;">
+            <h2>Quiz Complete!</h2>
+            <p id="score-text"></p>
+            <p id="percentage-text"></p>
+            <button id="restart-btn">Restart Quiz</button>
+        </div>
+    </div>
+
+    <script>
+        // All 250 questions are stored here
+        const questions = [
+            {
+                question: "If a matrix has the same number of rows and columns, it is called a",
+                options: ["Rectangular matrix", "Square matrix", "Row matrix", "Column matrix"],
+                answer: "Square matrix"
+            },
+            {
+                question: "The transpose of a row matrix is",
+                options: ["Row matrix", "Column matrix", "Identity matrix", "Null matrix"],
+                answer: "Column matrix"
+            },
+            {
+                question: "Which of the following is a diagonal matrix?",
+                options: ["$\\begin{pmatrix}1&0\\\\ 0&2\\end{pmatrix}$", "$\\begin{pmatrix}1&2\\\\ 4&3\\end{pmatrix}$", "$\\begin{pmatrix}0&3\\\\ 8&0\\end{pmatrix}$", "$\\begin{pmatrix}2&-2\\\\ -2&2\\end{pmatrix}$"],
+                answer: "$\\begin{pmatrix}1&0\\\\ 0&2\\end{pmatrix}$"
+            },
+            {
+                question: "If A is a $2\\times3$ matrix and B is a $3\\times4$ matrix, the order of AB is",
+                options: ["$3\\times2$", "$2\\times4$", "$4\\times3$", "$2\\times3$"],
+                answer: "$2\\times4$"
+            },
+            {
+                question: "A matrix which has all elements zero except the principal diagonal is called",
+                options: ["Row matrix", "Diagonal matrix", "Null matrix", "column matrix"],
+                answer: "Diagonal matrix"
+            },
+            {
+                question: "If $A=\\begin{pmatrix}2&0\\\\ 0&2\\end{pmatrix}$ then A is",
+                options: ["Identity matrix", "Null matrix", "Diagonal matrix", "Rectangular matrix"],
+                answer: "Diagonal matrix"
+            },
+            {
+                question: "Which of the following is not always true?",
+                options: ["$(A+B)^{T}=A^{T}+B^{T}$", "$(AB)^{T}=B^{T}A^{T}$", "$(kA)^{T}=kA^{T}$", "$(AB)^{T}=A^{T}B^{T}$"],
+                answer: "$(AB)^{T}=A^{T}B^{T}$"
+            },
+            {
+                question: "If $A=\\begin{pmatrix}1&2\\\\ 3&4\\end{pmatrix}$ and $B=\\begin{pmatrix}4&3\\\\ 2&1\\end{pmatrix}$, then $A+B$ is",
+                options: ["$\\begin{pmatrix}5&5\\\\ 5&5\\end{pmatrix}$", "$\\begin{pmatrix}1&5\\\\ 4&5\\end{pmatrix}$", "$\\begin{pmatrix}5&5\\\\ 5&6\\end{pmatrix}$", "$\\begin{pmatrix}2&5\\\\ 5&2\\end{pmatrix}$"],
+                answer: "$\\begin{pmatrix}5&5\\\\ 5&5\\end{pmatrix}$"
+            },
+            {
+                question: "If $A=\\lfloor a_{ij}\\rfloor$ is an m x n matrix, then $A^{T}$ will be",
+                options: ["$m\\times n$", "$n \\times m$", "$n\\times n$", "$m\\times m$"],
+                answer: "$n \\times m$"
+            },
+            {
+                question: "If A is a singular matrix, then",
+                options: ["$det(A)=0$", "$det(A)\\ne0$", "$A^{-1}$ exists", "$A^{T}$ not exist"],
+                answer: "$det(A)=0$"
+            },
+            {
+                question: "Which of the following operations on matrices is not defined?",
+                options: ["Addition of $2\\times3$ and $2\\times3$", "Multiplication of $3\\times2$ and 2x4", "Multiplication of $2\\times3$ and $2\\times3$", "Transpose of a $4\\times1$ matrix"],
+                answer: "Multiplication of $2\\times3$ and $2\\times3$"
+            },
+            {
+                question: "The determinant of a $2\\times2$ matrix $\\begin{pmatrix}a&b\\\\ c&d\\end{pmatrix}is$",
+                options: ["abcd", "ad - bc", "ac- bd", "ab+cd"],
+                answer: "ad - bc"
+            },
+            {
+                question: "The determinant of the identity matrix of order 3 is",
+                options: ["0", "1", "3", "9"],
+                answer: "1"
+            },
+            {
+                question: "If $A=\\begin{pmatrix}1&2\\\\ 3&4\\end{pmatrix}$, then $det(A)$ is",
+                options: ["-2", "-5", "2", "5"],
+                answer: "-2"
+            },
+            {
+                question: "The condition for a system of linear equations to have a unique solution using Cramer's rule is",
+                options: ["$\\Delta=0$", "$\\Delta\\ne0$", "$\\Delta=\\infty$", "None of these"],
+                answer: "$\\Delta\\ne0$"
+            },
+            {
+                question: "For the system of equations, $3x-2y=7$ and $6x+4y=14$, the value of $\\Delta$ is",
+                options: ["24", "7", "14", "1"],
+                answer: "24"
+            },
+            {
+                question: "Using Cramer's rule, solution formula for y is",
+                options: ["$\\frac{\\Delta_{y}}{\\Delta}$", "$\\frac{\\Delta}{\\Delta z}$", "$\\frac{\\Delta}{\\Delta y}$", "$\\Delta_{3}$"],
+                answer: "$\\frac{\\Delta_{y}}{\\Delta}$"
+            },
+            {
+                question: "If $det(A)=5$, then $det(A^{T})$ is",
+                options: ["5", "-5", "25", "Cannot be determined"],
+                answer: "5"
+            },
+            {
+                question: "If $\\Delta=10$, $\\Delta_{x}=20$, $\\Delta_{y}=30$, then solution of system is",
+                options: ["$x=1, y=2$", "$x=2, y=3$", "$x=20, y=30$", "No solution"],
+                answer: "$x=2, y=3$"
+            },
+            {
+                question: "Using Cramer's rule, if $\\Delta=3$, $\\Delta_{x}=-6$, $\\Delta_{y}=9$ the solution is:",
+                options: ["$x=2, y=2$", "$x=-2, y=3$", "$x=20, y=30$", "$x=-6, y=9$"],
+                answer: "$x=-2, y=3$"
+            },
+            {
+                question: "If $\\Delta=10$, $\\Delta_{x}=20$, $\\Delta_{y}=-10$, $\\Delta_{z}=5$, then the value of x is",
+                options: ["2", "-2", "1", "0.5"],
+                answer: "2"
+            },
+            {
+                question: "The minor of an element $a_{ij}$ of a determinant is obtained by",
+                options: ["Removing i-th row only", "Removing j-th column only", "Removing i-th row and j-th column", "Multiplying by $(-1)^{i+j}$"],
+                answer: "Removing i-th row and j-th column"
+            },
+            {
+                question: "The cofactor of an element $a_{ij}$ is",
+                options: ["Its minor", "Signed minor", "Its determinant", "Always positive"],
+                answer: "Signed minor"
+            },
+            {
+                question: "The adjoint of a square matrix A is defined as",
+                options: ["Transpose of A", "Transpose of cofactor matrix of A", "Determinant of A", "Inverse of A"],
+                answer: "Transpose of cofactor matrix of A"
+            },
+            {
+                question: "If $A=\\begin{pmatrix}4&-5\\\\ 3&1\\end{pmatrix}$, then minor of element $a_{11}$ is",
+                options: ["4", "3", "-5", "1"],
+                answer: "1"
+            },
+            {
+                question: "The non-diagonal elements in any unit matrix are",
+                options: ["1", "0", ">1", "<1"],
+                answer: "0"
+            },
+            {
+                question: "If $det(A)\\ne0$, then inverse of A is given by",
+                options: ["$\\frac{1}{det~A}A^{T}$", "$\\frac{1}{detA}adj(A)$", "$\\frac{1}{adj~A}A^{T}$", "$\\frac{1}{det~A}cof(A)$"],
+                answer: "$\\frac{1}{detA}adj(A)$"
+            },
+            {
+                question: "For the matrix $\\begin{bmatrix}1&-2\\\\ 5&3\\end{bmatrix}$, $M_{11}=$",
+                options: ["1", "-2", "5", "3"],
+                answer: "3"
+            },
+            {
+                question: "The adjoint of $2\\times2$ matrix $\\begin{pmatrix}a&b\\\\ c&d\\end{pmatrix}is$",
+                options: ["$\\begin{pmatrix}a&c\\\\ b&d\\end{pmatrix}$", "$\\begin{pmatrix}d&-b\\\\ -c&a\\end{pmatrix}$", "$\\begin{pmatrix}-a&-b\\\\ -c&-d\\end{pmatrix}$", "$\\begin{pmatrix}b&a\\\\ d&c\\end{pmatrix}$"],
+                answer: "$\\begin{pmatrix}d&-b\\\\ -c&a\\end{pmatrix}$"
+            },
+            {
+                question: "If $A=\\begin{pmatrix}2&3\\\\ -1&4\\end{pmatrix}$, then $det(A)$ is",
+                options: ["5", "7", "11", "8"],
+                answer: "11"
+            },
+            {
+                question: "The order of the determinant $\\begin{vmatrix}1&4&5\\\\ 3&0&4\\\\ -2&4&8\\end{vmatrix}$is",
+                options: ["3", "2", "1", "4"],
+                answer: "3"
+            },
+            {
+                question: "The number of elements arranged in a third order determinant is",
+                options: ["1", "4", "9", "16"],
+                answer: "9"
+            },
+            {
+                question: "The value of the determinant $\\begin{vmatrix}1&4\\\\ 2&3\\end{vmatrix}$is",
+                options: ["5", "3", "-5", "-3"],
+                answer: "-3"
+            },
+            {
+                question: "The value of the determinant $\\begin{vmatrix}1&0&0\\\\ -5&2&0\\\\ 4&8&3\\end{vmatrix}$is",
+                options: ["0", "3", "6", "12"],
+                answer: "6"
+            },
+            {
+                question: "The Cramer's formula to find the value of the variable x is",
+                options: ["$\\frac{\\Delta x}{\\Delta}$", "$\\Delta_{x}\\Delta$", "$\\Delta_{x}+\\Delta$", "$\\Delta_{x}-\\Delta$"],
+                answer: "$\\frac{\\Delta x}{\\Delta}$"
+            },
+            {
+                question: "If $\\Delta=5$, $\\Delta_{x}=5$, $\\Delta_{y}=-5$ and $\\Delta_{z}=10$ then the values of x, y and z are",
+                options: ["$x=1, y=1, z=2$", "$x=1, y=-1, z=1/2$", "$x=1, y=-1, z=2$", "$x=0, y=-1, z=-2$"],
+                answer: "$x=1, y=-1, z=2$"
+            },
+            {
+                question: "The number of columns in the matrix $\\begin{bmatrix}1&0&2\\\\ 5&8&4\\end{bmatrix}$is",
+                options: ["3", "2", "1", "0"],
+                answer: "3"
+            },
+            {
+                question: "The order of the matrix $\\begin{bmatrix}0&2\\\\ 4&8\\\\ 5&-3\\end{bmatrix}$is",
+                options: ["$2\\times3$", "$3\\times2$", "$1\\times3$", "$2\\times2$"],
+                answer: "$3\\times2$"
+            },
+            {
+                question: "Which of the following is a row matrix?",
+                options: ["[2]", "$\\begin{bmatrix}1\\\\ 2\\\\ -1\\end{bmatrix}$", "[5 2 -3]", "$\\begin{bmatrix}1&0&0\\\\ 0&0&1\\end{bmatrix}$"],
+                answer: "[5 2 -3]"
+            },
+            {
+                question: "Which of the following is a square matrix?",
+                options: ["[14]", "$\\begin{bmatrix}4&3&1\\\\ 5&3&8\\end{bmatrix}$", "$\\begin{bmatrix}1\\\\ 4\\\\ 9\\end{bmatrix}$", "$\\begin{bmatrix}2&1\\\\ 1&2\\end{bmatrix}$"],
+                answer: "$\\begin{bmatrix}2&1\\\\ 1&2\\end{bmatrix}$"
+            },
+            {
+                question: "The value of the determinant of $A=\\begin{bmatrix}2&1&0\\\\ 5&8&-1\\end{bmatrix}$is",
+                options: ["1", "15", "15", "Not defined"],
+                answer: "Not defined"
+            },
+            {
+                question: "Which of the following is the identity matrix of order 3?",
+                options: ["$\\begin{bmatrix}3&3&3\\\\ 3&3&3\\\\ 3&3&3\\end{bmatrix}$", "$\\begin{bmatrix}1&0&0\\\\ 0&1&0\\\\ 0&0&1\\end{bmatrix}$", "$\\begin{bmatrix}3&0&0\\\\ 0&3&0\\\\ 0&0&3\\end{bmatrix}$", "$\\begin{bmatrix}0&0&0\\\\ 0&0&0\\\\ 0&0&0\\end{bmatrix}$"],
+                answer: "$\\begin{bmatrix}1&0&0\\\\ 0&1&0\\\\ 0&0&1\\end{bmatrix}$"
+            },
+            {
+                question: "If $A=\\begin{bmatrix}1&2\\\\ 3&5\\end{bmatrix}$ and $B=\\begin{bmatrix}-5&7\\\\ 0&4\\end{bmatrix}$, then 4A-2B equals",
+                options: ["$\\begin{bmatrix}14&-6\\\\ 12&12\\end{bmatrix}$", "$\\begin{bmatrix}-2&4\\\\ 13&4\\end{bmatrix}$", "$\\begin{bmatrix}7&5\\\\ 5&-5\\end{bmatrix}$", "$\\begin{bmatrix}-4&9\\\\ 3&9\\end{bmatrix}$"],
+                answer: "$\\begin{bmatrix}14&-6\\\\ 12&12\\end{bmatrix}$"
+            },
+            {
+                question: "If $A=\\begin{bmatrix}1&-1\\\\ 1&2\\end{bmatrix}$ and $B=\\begin{bmatrix}3&4\\\\ 5&0\\end{bmatrix}$ then AB equals",
+                options: ["$\\begin{bmatrix}-2&4\\\\ 13&4\\end{bmatrix}$", "$\\begin{bmatrix}7&5\\\\ 5&-5\\end{bmatrix}$", "$\\begin{bmatrix}4&3\\\\ 6&2\\end{bmatrix}$", "$\\begin{bmatrix}3&-4\\\\ 5&0\\end{bmatrix}$"],
+                answer: "$\\begin{bmatrix}-2&4\\\\ 13&4\\end{bmatrix}$"
+            },
+            {
+                question: "If $A=\\begin{bmatrix}1&0\\\\ 0&1\\end{bmatrix}$ then $A^{T}$ equals",
+                options: ["$\\begin{bmatrix}1\\\\ 1\\end{bmatrix}$", "$\\begin{bmatrix}2\\\\ 3\\end{bmatrix}$", "$\\begin{bmatrix}1&0\\\\ 0&1\\end{bmatrix}$", "$\\begin{bmatrix}4\\\\ 3\\end{bmatrix}$"],
+                answer: "$\\begin{bmatrix}1&0\\\\ 0&1\\end{bmatrix}$"
+            },
+            {
+                question: "Which of the following is a singular matrix?",
+                options: ["$\\begin{bmatrix}1&2\\\\ 3&4\\end{bmatrix}$", "$\\begin{bmatrix}2&3\\\\ -2&-3\\end{bmatrix}$", "$\\begin{bmatrix}4&-1\\\\ 1&2\\end{bmatrix}$", "$\\begin{bmatrix}1&-2\\\\ 3&4\\end{bmatrix}$"],
+                answer: "$\\begin{bmatrix}2&3\\\\ -2&-3\\end{bmatrix}$"
+            },
+            {
+                question: "The cofactor of $-2$ in $\\begin{bmatrix}3&-2&5\\\\ 8&1&0\\\\ 3&4&-1\\end{bmatrix}$is",
+                options: ["-2", "2", "-8", "8"],
+                answer: "8"
+            },
+            {
+                question: "The adjoint of $\\begin{bmatrix}-1&2\\\\ 1&-5\\end{bmatrix}$is",
+                options: ["$\\begin{bmatrix}-1&1\\\\ 2&-5\\end{bmatrix}$", "$\\begin{bmatrix}-5&-2\\\\ -1&-1\\end{bmatrix}$", "$\\begin{bmatrix}1&-2\\\\ -1&5\\end{bmatrix}$", "$\\begin{bmatrix}2&-1\\\\ -5&1\\end{bmatrix}$"],
+                answer: "$\\begin{bmatrix}-5&-2\\\\ -1&-1\\end{bmatrix}$"
+            },
+            {
+                question: "The element in the second row and third column of the matrix $\\begin{bmatrix}1&2&3\\\\ 5&6&8\\\\ 1&4&7\\end{bmatrix}$is",
+                options: ["8", "4", "6", "7"],
+                answer: "8"
+            },
+            {
+                question: "The order of the matrix $\\begin{bmatrix}3\\\\ -2\\\\ 5\\end{bmatrix}$",
+                options: ["$2\\times3$", "$3\\times1$", "$1\\times3$", "$2\\times2$"],
+                answer: "$3\\times1$"
+            },
+            {
+                question: "The value of $\\sin 30^{\\circ}$ is:",
+                options: ["0", "$1/2$", "$\\sqrt{3}/2$", "1"],
+                answer: "$1/2$"
+            },
+            {
+                question: "The value of $\\cos 90^{\\circ}$ is:",
+                options: ["1", "0", "-1", "$1/2$"],
+                answer: "0"
+            },
+            {
+                question: "The value of $\\sin 60^{\\circ}$ is:",
+                options: ["0", "$1/2$", "1", "$\\sqrt{3}/2$"],
+                answer: "$\\sqrt{3}/2$"
+            },
+            {
+                question: "The value of $\\cos 0^{\\circ}$ is:",
+                options: ["1", "0", "-1", "$1/2$"],
+                answer: "1"
+            },
+            {
+                question: "The domain of $\\sin x$ is",
+                options: ["set of all natural numbers", "set of all whole numbers", "set of all real numbers", "set of all integers"],
+                answer: "set of all real numbers"
+            },
+            {
+                question: "Which of the following is NOT correct?",
+                options: ["$\\sin^2\\theta + \\cos^2\\theta = 1$", "$\\tan\\theta = \\sin\\theta/\\cos\\theta$", "$\\cot\\theta = \\cos\\theta/\\sin\\theta$", "$\\sin\\theta = 1/\\tan\\theta$"],
+                answer: "$\\sin\\theta = 1/\\tan\\theta$"
+            },
+            {
+                question: "The maximum value of the graph of $y = \\cos x$ is :",
+                options: ["0", "1", "-1", "$\\infty$"],
+                answer: "1"
+            },
+            {
+                question: "The value of $\\sin 90^{\\circ}$ is:",
+                options: ["0", "1", "-1", "1/2"],
+                answer: "1"
+            },
+            {
+                question: "The value of $\\tan 45^{\\circ}$ is:",
+                options: ["0", "1", "$\\sqrt{3}$", "$\\infty$"],
+                answer: "1"
+            },
+            {
+                question: "The value of $\\cos 60^{\\circ}$ is:",
+                options: ["0", "1", "-1", "1/2"],
+                answer: "1/2"
+            },
+            {
+                question: "The graph of $y = \\sin x$ passes through:",
+                options: ["(0,1)", "($\\pi$,1)", "(0,0)", "($\\pi/2$,0)"],
+                answer: "(0,0)"
+            },
+            {
+                question: "The maximum value of $\\sin x$ is:",
+                options: ["0", "1", "-1", "$\\sqrt{3}/2$"],
+                answer: "1"
+            },
+            {
+                question: "The minimum value of $\\cos x$ is:",
+                options: ["0", "1", "-1", "-1/2"],
+                answer: "-1"
+            },
+            {
+                question: "The value of $\\sec 60^{\\circ}$ is:",
+                options: ["2", "1/2", "-1", "$\\sqrt{3}$"],
+                answer: "2"
+            },
+            {
+                question: "The value of $\\csc 30^{\\circ}$ is:",
+                options: ["0", "1/2", "2", "$\\sqrt{3}$"],
+                answer: "2"
+            },
+            {
+                question: "$\\tan \\theta$ is undefined when:",
+                options: ["$\\theta = 30^{\\circ}$", "$\\theta = 60^{\\circ}$", "$\\theta = 0$", "$\\theta = 90^{\\circ}$"],
+                answer: "$\\theta = 90^{\\circ}$"
+            },
+            {
+                question: "$\\cos^2\\theta + \\sin^2\\theta$ equals:",
+                options: ["0", "1", "2", "-1"],
+                answer: "1"
+            },
+            {
+                question: "The formula for $\\sin(A+B)$ is:",
+                options: ["$\\sin A + \\sin B$", "$\\sin A\\cos B + \\cos A\\sin B$", "$\\sin A\\cos B - \\cos A\\sin B$", "$\\cos A\\cos B - \\sin A\\sin B$"],
+                answer: "$\\sin A\\cos B + \\cos A\\sin B$"
+            },
+            {
+                question: "Convert $45^{\\circ}$ to radians.",
+                options: ["$\\pi/3$", "$\\pi/2$", "$\\pi$", "$\\pi/4$"],
+                answer: "$\\pi/4$"
+            },
+            {
+                question: "Convert $\\pi/5$ radians to degrees.",
+                options: ["$36^{\\circ}$", "$360^{\\circ}$", "$36/\\pi^{\\circ}$", "$13^{\\circ}$"],
+                answer: "$36^{\\circ}$"
+            },
+            {
+                question: "If $\\sin\\theta = 1/2$, then $\\cos\\theta = $",
+                options: ["$1/2$", "$1/\\sqrt{2}$", "$\\sqrt{3}/2$", "$1/3$"],
+                answer: "$\\sqrt{3}/2$"
+            },
+            {
+                question: "The period of $\\sin x$ is",
+                options: ["$2\\pi$", "$\\pi$", "$\\pi/2$", "1"],
+                answer: "$2\\pi$"
+            },
+            {
+                question: "The period of $\\tan x$ is",
+                options: ["$2\\pi$", "$\\pi$", "$\\pi/2$", "1"],
+                answer: "$\\pi$"
+            },
+            {
+                question: "The period of $\\cos x$ is",
+                options: ["$2\\pi$", "$\\pi$", "$\\pi/2$", "1"],
+                answer: "$2\\pi$"
+            },
+            {
+                question: "Which of the following relation is correct?",
+                options: ["$\\sec^2\\theta - \\tan^2\\theta = 1$", "$\\sec^2\\theta + \\tan^2\\theta = 1$", "$\\tan^2\\theta - \\sec^2\\theta = 1$", "none of these"],
+                answer: "$\\sec^2\\theta + \\tan^2\\theta = 1$"
+            },
+            {
+                question: "$\\frac{1}{\\csc x} = $",
+                options: ["$\\cot x$", "$\\cos x$", "$\\csc x$", "$\\sin x$"],
+                answer: "$\\sin x$"
+            },
+            {
+                question: "Which of the following is NOT correct?",
+                options: ["$\\sin(90^{\\circ} - \\theta) = \\cos\\theta$", "$\\cos(90^{\\circ} - \\theta) = \\sin\\theta$", "$\\tan(90^{\\circ} - \\theta) = \\sec\\theta$", "$\\sec(90^{\\circ} - \\theta) = \\csc\\theta$"],
+                answer: "$\\tan(90^{\\circ} - \\theta) = \\sec\\theta$"
+            },
+            {
+                question: "$\\cos^2 x - \\sin^2 x = $",
+                options: ["$\\sin^2 x - \\cos^2 x$", "$\\cos(2x)$", "$2\\cos^2 x$", "$\\sin^2 x + \\cos^2 x$"],
+                answer: "$\\cos(2x)$"
+            },
+            {
+                question: "$\\sin(2A) = $",
+                options: ["$\\frac{2\\tan A}{1+\\tan^2 A}$", "$\\frac{2\\tan A}{1-\\tan^2 A}$", "$\\frac{1-\\tan^2 A}{1+\\tan^2 A}$", "$\\sin^2 A - \\cos^2 A$"],
+                answer: "$\\frac{2\\tan A}{1-\\tan^2 A}$"
+            },
+            {
+                question: "$\\sin x = \\cos x$ when $x = $",
+                options: ["$30^{\\circ}$", "$\\pi/3$", "$45^{\\circ}$", "$90^{\\circ}$"],
+                answer: "$45^{\\circ}$"
+            },
+            {
+                question: "$\\cos(2A) = $",
+                options: ["$2\\sin A \\cos A$", "$\\cos^2 A - \\sin^2 A$", "$\\sin^2 A + \\cos^2 A$", "$\\sin^2 A - \\cos^2 A$"],
+                answer: "$\\cos^2 A - \\sin^2 A$"
+            },
+            {
+                question: "Which of the following is NOT correct?",
+                options: ["$\\sin(-\\theta) = -\\sin\\theta$", "$\\cos(-\\theta) = \\cos\\theta$", "$\\tan(-\\theta) = -\\tan\\theta$", "$\\cot(-\\theta) = \\cot\\theta$"],
+                answer: "$\\cot(-\\theta) = \\cot\\theta$"
+            },
+            {
+                question: "The value of $\\sin 10^{\\circ} \\cos 20^{\\circ} + \\cos 10^{\\circ} \\sin 20^{\\circ}$ is",
+                options: ["0", "1", "-1", "2"],
+                answer: "0"
+            },
+            {
+                question: "The value of $\\frac{\\tan 60^{\\circ} - \\tan 30^{\\circ}}{1 + \\tan 60^{\\circ} \\tan 30^{\\circ}}$ is",
+                options: ["$1/\\sqrt{3}$", "0", "$\\sqrt{3}$", "Undefined"],
+                answer: "$\\sqrt{3}$"
+            },
+            {
+                question: "The value of $\\sin 10^{\\circ} \\sin 20^{\\circ} - \\cos 10^{\\circ} \\cos 20^{\\circ}$ is",
+                options: ["0", "$\\cos 30^{\\circ}$", "$1/2$", "1"],
+                answer: "$\\cos 30^{\\circ}$"
+            },
+            {
+                question: "The value of $\\cos^2 15^{\\circ} - \\sin^2 15^{\\circ}$ is",
+                options: ["0", "$1/2$", "$\\sqrt{3}/2$", "1"],
+                answer: "$1/2$"
+            },
+            {
+                question: "The value of $2\\sin 15^{\\circ}\\cos 15^{\\circ}$ is",
+                options: ["0", "$1/2$", "$\\sqrt{3}/2$", "$\\sqrt{3}$"],
+                answer: "$\\sqrt{3}$"
+            },
+            {
+                question: "If $\\tan x = 3/4$ and $\\tan y = 1/7$, then the value of $\\tan(x+y)$ is",
+                options: ["0", "$1/2$", "$\\sqrt{3}/2$", "1"],
+                answer: "1"
+            },
+            {
+                question: "The value of $\\tan 1^{\\circ} \\tan 2^{\\circ} \\tan 3^{\\circ} ... \\tan 89^{\\circ}$ is",
+                options: ["0", "1", "-1", "none of these"],
+                answer: "0"
+            },
+            {
+                question: "$\\cos(A+B)$ is:",
+                options: ["$\\cos A\\cos B + \\sin A\\sin B$", "$\\cos A\\cos B - \\sin A\\sin B$", "$\\cos A\\sin B + \\sin A\\cos B$", "None"],
+                answer: "$\\cos A\\cos B - \\sin A\\sin B$"
+            },
+            {
+                question: "$\\tan(A+B)$ is:",
+                options: ["$(\\tan A + \\tan B)/(1 + \\tan A\\tan B)$", "$(\\tan A - \\tan B)/(1 + \\tan A\\tan B)$", "$(\\tan A + \\tan B)/(1 - \\tan A\\tan B)$", "$(\\tan A - \\tan B)/(1 - \\tan A\\tan B)$"],
+                answer: "$(\\tan A + \\tan B)/(1 - \\tan A\\tan B)$"
+            },
+            {
+                question: "$\\sin(A-B)$ is:",
+                options: ["$\\sin A\\cos B - \\cos A\\sin B$", "$\\sin A\\cos B + \\cos A\\sin B$", "$\\cos A\\cos B - \\sin A\\sin B$", "$\\cos A\\cos B + \\sin A\\sin B$"],
+                answer: "$\\sin A\\cos B - \\cos A\\sin B$"
+            },
+            {
+                question: "$\\cos(A-B)$ is:",
+                options: ["$\\cos A\\cos B + \\sin A\\sin B$", "$\\cos A\\cos B - \\sin A\\sin B$", "$\\cos A\\sin B - \\sin A\\cos B$", "None"],
+                answer: "$\\cos A\\cos B + \\sin A\\sin B$"
+            },
+            {
+                question: "$\\tan(A-B)$ is:",
+                options: ["$(\\tan A - \\tan B)/(1 + \\tan A\\tan B)$", "$(\\tan A - \\tan B)/(1 - \\tan A\\tan B)$", "$(\\tan A + \\tan B)/(1 + \\tan A\\tan B)$", "$(\\tan A + \\tan B)/(1 - \\tan A\\tan B)$"],
+                answer: "$(\\tan A - \\tan B)/(1 + \\tan A\\tan B)$"
+            },
+            {
+                question: "Value of $\\sin 60^{\\circ}\\cos 30^{\\circ} + \\cos 60^{\\circ}\\sin 30^{\\circ}$ is:",
+                options: ["0", "1/2", "1", "$\\sqrt{3}/2$"],
+                answer: "1"
+            },
+            {
+                question: "$\\cos(45^{\\circ}+45^{\\circ})$ is:",
+                options: ["0", "1", "$\\sqrt{2}/2$", "-1"],
+                answer: "0"
+            },
+            {
+                question: "$\\sin(30^{\\circ}+60^{\\circ})$ is:",
+                options: ["0", "1/2", "$\\sqrt{3}/2$", "1"],
+                answer: "1"
+            },
+            {
+                question: "$\\cos(30^{\\circ}+60^{\\circ})$ is:",
+                options: ["0", "1/2", "$\\sqrt{3}/2$", "-1"],
+                answer: "0"
+            },
+            {
+                question: "$\\tan(45^{\\circ}+45^{\\circ})$ is:",
+                options: ["1", "0", "Not defined", "$\\sqrt{3}$"],
+                answer: "Not defined"
+            },
+            {
+                question: "$\\sin(90^{\\circ}-\\theta)$ is:",
+                options: ["$\\cot\\theta$", "$\\tan\\theta$", "$\\sin\\theta$", "$\\cos\\theta$"],
+                answer: "$\\cos\\theta$"
+            },
+            {
+                question: "The modulus of vector $\\vec{a} = 3\\vec{i} + 4\\vec{j}$ is:",
+                options: ["5", "7", "25", "$\\sqrt{7}$"],
+                answer: "5"
+            },
+            {
+                question: "A unit vector in the direction of vector $2\\vec{i} + \\vec{j}$ is:",
+                options: ["$(2\\vec{i} + \\vec{j})/\\sqrt{5}$", "$(2\\vec{i} + \\vec{j})/2$", "$(\\vec{i} + \\vec{j})/\\sqrt{2}$", "$(2\\vec{i} + \\vec{j})/3$"],
+                answer: "$(2\\vec{i} + \\vec{j})/\\sqrt{5}$"
+            },
+            {
+                question: "The direction cosines of vector $\\vec{i} + \\vec{j} + \\vec{k}$",
+                options: ["$(1/\\sqrt{3}, 1/\\sqrt{3}, 1/\\sqrt{3})$", "(1, 0, 0)", "(0, 1, 1)", "(1,1,1)"],
+                answer: "$(1/\\sqrt{3}, 1/\\sqrt{3}, 1/\\sqrt{3})$"
+            },
+            {
+                question: "If $\\vec{OP_1} = 5\\vec{i}$ and $\\vec{OP_2} = 12\\vec{j}$, then distance between them is",
+                options: ["13", "17", "$\\sqrt{119}$", "7"],
+                answer: "13"
+            },
+            {
+                question: "A vector parallel to $\\vec{i} + 2\\vec{j}$ is:",
+                options: ["$2\\vec{i} + 4\\vec{j}$", "$\\vec{i} - 2\\vec{j}$", "$\\vec{i}$", "$\\vec{j}$"],
+                answer: "$2\\vec{i} + 4\\vec{j}$"
+            },
+            {
+                question: "The modulus of vector $7\\vec{i}$",
+                options: ["1", "7", "$\\sqrt{7}$", "49"],
+                answer: "7"
+            },
+            {
+                question: "A unit vector along x-axis is:",
+                options: ["$\\vec{i}$", "$\\vec{j}$", "$\\vec{k}$", "$-\\vec{i}$"],
+                answer: "$\\vec{i}$"
+            },
+            {
+                question: "The angle between vector $\\vec{i}$ and $\\vec{j}$ is:",
+                options: ["$0^{\\circ}$", "$45^{\\circ}$", "$90^{\\circ}$", "$180^{\\circ}$"],
+                answer: "$90^{\\circ}$"
+            },
+            {
+                question: "The vector with direction ratios (0, 0, 1) is:",
+                options: ["$\\vec{i}$", "$\\vec{j}$", "$\\vec{k}$", "$\\vec{i}+\\vec{j}+\\vec{k}$"],
+                answer: "$\\vec{k}$"
+            },
+            {
+                question: "If $\\vec{a} = 3\\vec{i} + 4\\vec{j}$, then unit vector in its direction is:",
+                options: ["$(3\\vec{i} + 4\\vec{j})/5$", "$(3\\vec{i} + 4\\vec{j})/7$", "$(\\vec{i} + \\vec{j})/\\sqrt{2}$", "$(\\vec{i} - \\vec{j})/\\sqrt{2}$"],
+                answer: "$(3\\vec{i} + 4\\vec{j})/5$"
+            },
+            {
+                question: "The distance between points (1,2,3) and (4,6,3) is:",
+                options: ["5", "$\\sqrt{17}$", "$\\sqrt{34}$", "$\\sqrt{61}$"],
+                answer: "5"
+            },
+            {
+                question: "The cosine of angle between $\\vec{i}$ and $\\vec{j}$ is:",
+                options: ["1", "0", "-1", "$\\pi/2$"],
+                answer: "0"
+            },
+            {
+                question: "The unit vector in the direction of vector $-\\vec{i} + \\vec{k}$ is:",
+                options: ["$(-\\vec{i} + \\vec{k})/\\sqrt{2}$", "$(\\vec{i} + \\vec{k})/\\sqrt{2}$", "$(\\vec{i} - \\vec{k})/\\sqrt{2}$", "$(-\\vec{i} - \\vec{k})/\\sqrt{2}$"],
+                answer: "$(-\\vec{i} + \\vec{k})/\\sqrt{2}$"
+            },
+            {
+                question: "$\\vec{i} \\cdot \\vec{i}$",
+                options: ["0", "1", "-1", "2"],
+                answer: "1"
+            },
+            {
+                question: "If $\\vec{a} = 2\\vec{i} + \\vec{k}$, $\\vec{b} = -\\vec{j}$, then $\\vec{a} \\cdot \\vec{b} = $",
+                options: ["1", "2", "0", "-1"],
+                answer: "1"
+            },
+            {
+                question: "$\\vec{i} \\times \\vec{i}$",
+                options: ["0", "$\\vec{i}$", "$\\vec{j}$", "$\\vec{k}$"],
+                answer: "0"
+            },
+            {
+                question: "The magnitude of $\\vec{i} \\times \\vec{j}$ is:",
+                options: ["1", "0", "$\\sqrt{2}$", "-1"],
+                answer: "1"
+            },
+            {
+                question: "If $\\vec{a}$ and $\\vec{b}$ are perpendicular vectors, then $\\vec{a} \\cdot \\vec{b} = $",
+                options: ["0", "1", "$\\vec{a}$", "$\\vec{b}$"],
+                answer: "0"
+            },
+            {
+                question: "If $\\vec{a} \\times \\vec{b} = 0$, then $\\vec{a}$ and $\\vec{b}$ are",
+                options: ["perpendicular", "parallel", "both perpendicular and parallel", "None"],
+                answer: "parallel"
+            },
+            {
+                question: "The vector with direction ratios (2, 3, 1) is:",
+                options: ["$3\\vec{i}+2\\vec{j}+\\vec{k}$", "$2\\vec{i}+3\\vec{j}+\\vec{k}$", "$\\vec{i}+3\\vec{j}+2\\vec{k}$", "$2\\vec{i}+\\vec{j}+3\\vec{k}$"],
+                answer: "$2\\vec{i}+3\\vec{j}+\\vec{k}$"
+            },
+            {
+                question: "If $\\vec{a} \\cdot \\vec{b} = 0$, then",
+                options: ["$\\vec{a} || \\vec{b}$", "$\\vec{a} \\perp \\vec{b}$", "$\\vec{a} = 0$", "$\\vec{b} = 0$"],
+                answer: "$\\vec{a} \\perp \\vec{b}$"
+            },
+            {
+                question: "The magnitude of vector $3\\vec{i}+4\\vec{j}+5\\vec{k}$ is",
+                options: ["5", "50", "$\\sqrt{50}$", "$\\sqrt{40}$"],
+                answer: "$\\sqrt{50}$"
+            },
+            {
+                question: "The magnitude of vector $4\\vec{i}$ is",
+                options: ["2", "90", "16", "4"],
+                answer: "4"
+            },
+            {
+                question: "The direction ratios of the vector $4\\vec{i}-3\\vec{j}+7\\vec{k}$ are",
+                options: ["(4,3,7)", "(4,-3,7)", "(-4,-3,-7)", "(4i,-3j,7k)"],
+                answer: "(4,-3,7)"
+            },
+            {
+                question: "The position vector of the point (3,4,2) is",
+                options: ["$4\\vec{i}+3\\vec{j}+2\\vec{k}$", "$3\\vec{i}+4\\vec{j}+2\\vec{k}$", "$2\\vec{i}+4\\vec{j}+3\\vec{k}$", "$3\\vec{i}+2\\vec{j}+4\\vec{k}$"],
+                answer: "$3\\vec{i}+4\\vec{j}+2\\vec{k}$"
+            },
+            {
+                question: "The position vector of the point $(1, 2, 3)$ is",
+                options: ["$\\vec{i}+2\\vec{j}+3\\vec{k}$", "$2\\vec{i}+\\vec{j}+3\\vec{k}$", "$3\\vec{i}+2\\vec{j}+\\vec{k}$", "$\\vec{i}+\\vec{j}+\\vec{k}$"],
+                answer: "$\\vec{i}+2\\vec{j}+3\\vec{k}$"
+            },
+            {
+                question: "The magnitude of vector $\\vec{i}+\\vec{j}+\\vec{k}$ is",
+                options: ["3", "1", "$\\sqrt{3}$", "2"],
+                answer: "$\\sqrt{3}$"
+            },
+            {
+                question: "The direction ratios of the vector $2\\vec{i}+\\vec{j}+3\\vec{k}$ are",
+                options: ["$(2, 1, 3)$", "$(1, 2, 3)$", "$(3, 2, 1)$", "$(2, 3, 1)$"],
+                answer: "$(2, 1, 3)$"
+            },
+            {
+                question: "The direction cosines of the vector $\\vec{i}$ are",
+                options: ["$(1, 0, 0)$", "$(0, 1, 0)$", "$(0, 0, 1)$", "$(1, 1, 1)$"],
+                answer: "$(1, 0, 0)$"
+            },
+            {
+                question: "Find the modulus of the vector $\\vec{i}+2\\vec{j}+3\\vec{k}$ is",
+                options: ["$\\sqrt{14}$", "$\\sqrt{10}$", "$\\sqrt{12}$", "$\\sqrt{13}$"],
+                answer: "$\\sqrt{14}$"
+            },
+            {
+                question: "The dot product of the vectors $3\\vec{i}+2\\vec{j}+\\vec{k}$ and $\\vec{i}+2\\vec{j}+6\\vec{k}$ is",
+                options: ["12", "14", "13", "15"],
+                answer: "13"
+            },
+            {
+                question: "Vector area of triangle with adjacent side $\\vec{a}$ and $\\vec{b}$ is given by",
+                options: ["$\\frac{1}{2} |\\vec{a} \\times \\vec{b}|$", "$|\\vec{a} \\times \\vec{b}|$", "$|\\vec{a} \\cdot \\vec{b}|$", "$\\frac{1}{2} |\\vec{a} \\cdot \\vec{b}|$"],
+                answer: "$\\frac{1}{2} |\\vec{a} \\times \\vec{b}|$"
+            },
+            {
+                question: "If $\\vec{a}$ and $\\vec{b}$ then $|\\vec{a} + \\vec{b}| = $",
+                options: ["$|\\vec{a}| + |\\vec{b}|$", "$|\\vec{a}| - |\\vec{b}|$", "$\\sqrt{|\\vec{a}|^2 + |\\vec{b}|^2}$", "$|\\vec{a}|^2 + |\\vec{b}|^2$"],
+                answer: "$\\sqrt{|\\vec{a}|^2 + |\\vec{b}|^2}$"
+            },
+            {
+                question: "If $\\vec{a} = 2\\vec{i}+3\\vec{j}+6\\vec{k}$ and $\\vec{b}$ are parallel vectors, then the value of $\\lambda$ is",
+                options: ["2", "4", "6", "1"],
+                answer: "6"
+            },
+            {
+                question: "The value of $(\\vec{i} \\times \\vec{j}) \\cdot \\vec{k}$ is",
+                options: ["0", "-1", "1", "2"],
+                answer: "1"
+            },
+            {
+                question: "If $|\\vec{a}|=2$, $|\\vec{b}|=7$, $|\\vec{a} \\cdot \\vec{b}|=7$, the angle between $\\vec{a}$ and $\\vec{b}$ is",
+                options: ["$30^{\\circ}$", "$60^{\\circ}$", "$90^{\\circ}$", "$45^{\\circ}$"],
+                answer: "$60^{\\circ}$"
+            },
+            {
+                question: "The sum of the squares of the direction cosines of $\\vec{r}$ is",
+                options: ["1", "0", "3", "10"],
+                answer: "1"
+            },
+            {
+                question: "If $\\vec{a} = \\vec{i} + 2\\vec{j} + 3\\vec{k}$ and $\\vec{b} = 3\\vec{i} + 2\\vec{j} + \\vec{k}$, then $\\vec{a} \\cdot \\vec{b} = $",
+                options: ["10", "14", "11", "13"],
+                answer: "10"
+            },
+            {
+                question: "If $\\vec{r} = 2\\vec{i} + 3\\vec{j} + \\vec{k}$, then direction ratios are proportional to:",
+                options: ["2:3:1", "1:1:1", "3:2:1", "4:9:1"],
+                answer: "2:3:1"
+            },
+            {
+                question: "The cross product $\\vec{a} \\times \\vec{b}$ is:",
+                options: ["A scalar", "Zero always", "A vector", "None"],
+                answer: "A vector"
+            },
+            {
+                question: "Magnitude of $\\vec{a} \\times \\vec{b}$ is:",
+                options: ["$|\\vec{a}||\\vec{b}|\\cos\\theta$", "$|\\vec{a}||\\vec{b}|\\sin\\theta$", "$|\\vec{a} + \\vec{b}|$", "$|\\vec{a}| + |\\vec{b}| $"],
+                answer: "$|\\vec{a}||\\vec{b}|\\sin\\theta$"
+            },
+            {
+                question: "Find the direction cosines of a vector whose direction ratios are 2, 3, -6.",
+                options: ["$(\\frac{2}{7}, \\frac{3}{7}, \\frac{-6}{7})$", "$(\\frac{2}{49}, \\frac{3}{49}, \\frac{-6}{49})$", "$(\\frac{2}{\\sqrt{7}}, \\frac{3}{\\sqrt{7}}, \\frac{-6}{\\sqrt{7}})$", "$(\\frac{2}{6}, \\frac{3}{6}, \\frac{-6}{6})$"],
+                answer: "$(\\frac{2}{7}, \\frac{3}{7}, \\frac{-6}{7})$"
+            },
+            {
+                question: "The dot product of two unit vectors equals:",
+                options: ["$\\sin\\theta$", "$\\cos\\theta$", "$\\tan\\theta$", "$1/\\cos\\theta$"],
+                answer: "$\\cos\\theta$"
+            },
+            {
+                question: "The projection of $\\vec{a}$ on $\\vec{b}$ is a:",
+                options: ["Scalar", "Vector", "Unit vector", "Zero vector"],
+                answer: "Scalar"
+            },
+            {
+                question: "vector perpendicular to both $\\vec{i}$ and $\\vec{j}$ is:",
+                options: ["$\\vec{k}$", "$-\\vec{k}$", "$\\vec{i}+\\vec{j}$", "$\\vec{i}-\\vec{j}$"],
+                answer: "$\\vec{k}$"
+            },
+            {
+                question: "vector perpendicular to both $\\vec{j}$ and $\\vec{k}$ is:",
+                options: ["$\\vec{i}$", "$-\\vec{j}$", "$\\vec{j}+\\vec{k}$", "$\\vec{j}-\\vec{k}$"],
+                answer: "$\\vec{i}$"
+            },
+            {
+                question: "The dot product of the vectors $\\vec{i} + \\vec{j}$ and $\\vec{i} - \\vec{j}$",
+                options: ["0", "1", "2", "$\\sqrt{2}$"],
+                answer: "0"
+            },
+            {
+                question: "The position vector of point (2, -3, 1) is:",
+                options: ["$2\\vec{i} + 3\\vec{j} + \\vec{k}$", "$2\\vec{i} - 3\\vec{j} + \\vec{k}$", "$-2\\vec{i} + 3\\vec{j} + \\vec{k}$", "$2\\vec{i} + 3\\vec{j} - \\vec{k}$"],
+                answer: "$2\\vec{i} - 3\\vec{j} + \\vec{k}$"
+            },
+            {
+                question: "If $\\vec{a} = 2\\vec{i} + \\vec{j} + \\vec{k}$ and $\\vec{b} = \\vec{i} + 2\\vec{j} + \\vec{k}$, then $a\\times b = $",
+                options: ["$\\vec{i} + \\vec{j} - \\vec{k}$", "$\\vec{i} - \\vec{j} + \\vec{k}$", "$-\\vec{i} + \\vec{j} + \\vec{k}$", "$\\vec{i} + \\vec{j} + \\vec{k}$"],
+                answer: "$-\\vec{i} + \\vec{j} + \\vec{k}$"
+            },
+            {
+                question: "Projection of $\\vec{a}$ on $\\vec{b}$ is",
+                options: ["$\\frac{\\vec{a} \\cdot \\vec{b}}{|\\vec{b}|}$", "$\\frac{\\vec{a} \\cdot \\vec{b}}{|\\vec{a}|}$", "$\\frac{\\vec{a} \\times \\vec{b}}{|\\vec{b}|}$", "$\\frac{\\vec{a} \\times \\vec{b}}{|\\vec{a}|}$"],
+                answer: "$\\frac{\\vec{a} \\cdot \\vec{b}}{|\\vec{b}|}$"
+            },
+            {
+                question: "The standard deviation of a data is 8, if 5 is added to all data values then the new standard deviation is",
+                options: ["40", "13", "8", "3"],
+                answer: "8"
+            },
+            {
+                question: "If variance is 49, then the standard deviation is",
+                options: ["49", "10", "7", "490"],
+                answer: "7"
+            },
+            {
+                question: "Formula for variance",
+                options: ["$\\sigma$", "$\\sigma^2$", "$\\sqrt{\\sigma}$", "$\\mu$"],
+                answer: "$\\sigma^2$"
+            },
+            {
+                question: "If every observation in a data set is increased by a constant value, the variance will:",
+                options: ["Increase", "Decrease", "Remain unchanged", "Become zero"],
+                answer: "Remain unchanged"
+            },
+            {
+                question: "If variance is 81, then the standard deviation is",
+                options: ["9", "100", "18", "0"],
+                answer: "9"
+            },
+            {
+                question: "If every observation in a data set is multiplied by a constant value k, the standard deviation will:",
+                options: ["Remain unchanged", "Be divided by k", "Be multiplied by k", "Be multiplied by $k^2$"],
+                answer: "Be multiplied by k"
+            },
+            {
+                question: "Normal equations for fitting $y = ax + b$ are:",
+                options: ["$\\Sigma y = a\\Sigma x + nb, \\Sigma xy = a\\Sigma x^2 + b\\Sigma x$", "$\\Sigma y = \\Sigma x + n, \\Sigma x^2 = \\Sigma xy$", "$\\Sigma y = \\Sigma x + n, \\Sigma x^2 = \\Sigma x$", "None"],
+                answer: "$\\Sigma y = a\\Sigma x + nb, \\Sigma xy = a\\Sigma x^2 + b\\Sigma x$"
+            },
+            {
+                question: "In fitting $y = ax + b$, parameters to be found are:",
+                options: ["a only", "b only", "a and b", "a, b, x and y"],
+                answer: "a and b"
+            },
+            {
+                question: "For 'n' terms, the arithmetic mean is",
+                options: ["$\\frac{\\Sigma x}{n}$", "$\\Sigma x$", "$n \\Sigma x$", "$\\frac{n}{\\Sigma x}$"],
+                answer: "$\\frac{\\Sigma x}{n}$"
+            },
+            {
+                question: "If each data of the observation is increased by 5, then the arithmetic mean",
+                options: ["decreased by 5", "increased by 5", "Unchanged", "becomes zero"],
+                answer: "increased by 5"
+            },
+            {
+                question: "If $\\Sigma x = 0$, then the normal equation simplifies to:",
+                options: ["$\\Sigma y = nb, \\Sigma xy = a\\Sigma x^2$", "$\\Sigma y = a\\Sigma x$", "$\\Sigma y = \\Sigma x$", "None"],
+                answer: "$\\Sigma y = nb, \\Sigma xy = a\\Sigma x^2$"
+            },
+            {
+                question: "Straight line fitting is used for:",
+                options: ["Linear data", "Nonlinear data", "Random data", "None"],
+                answer: "Linear data"
+            },
+            {
+                question: "Number of unknowns in $y = ax + b$ is:",
+                options: ["1", "2", "3", "None"],
+                answer: "2"
+            },
+            {
+                question: "If $\\Sigma x = 20, \\Sigma y = 10, n = 5$, one normal equation is:",
+                options: ["$20 = 10a + 5b$", "$10=20a+5b$", "$20= 20a+b$", "$10=5a+20b$"],
+                answer: "$10=20a+5b$"
+            },
+            {
+                question: "If $\\Sigma x = 10, \\Sigma y = 20, n = 5$, one normal equation is:",
+                options: ["$20 = 10a + 5b$", "$10=20a+5b$", "$20= 20a+b$", "$10=5a+20b$"],
+                answer: "$20 = 10a + 5b$"
+            },
+            {
+                question: "Normal equation involves:",
+                options: ["$\\Sigma x, \\Sigma y, \\Sigma xy, \\Sigma x^2$", "$\\Sigma y, \\Sigma xy, \\Sigma x^2$", "$\\Sigma x, \\Sigma y, \\Sigma xy$", "$\\Sigma x, \\Sigma y$"],
+                answer: "$\\Sigma x, \\Sigma y, \\Sigma xy, \\Sigma x^2$"
+            },
+            {
+                question: "The algebraic sum of the deviations of a set of n values from their mean is",
+                options: ["0", "n-1", "n", "n+1"],
+                answer: "0"
+            },
+            {
+                question: "Which of the following is a measure of central tendency?",
+                options: ["Mean", "Standard Deviation", "Variance", "Range"],
+                answer: "Mean"
+            },
+            {
+                question: "A low standard deviation indicates that:",
+                options: ["Data values are widely spread around the mean", "Data values are close to the mean", "Data values are negative", "The mean is zero"],
+                answer: "Data values are close to the mean"
+            },
+            {
+                question: "For a given data set, which statement is true?",
+                options: ["Variance is always less than standard deviation", "Standard deviation and variance are always equal", "Variance is always non-negative", "Standard deviation may be negative"],
+                answer: "Variance is always non-negative"
+            },
+            {
+                question: "The arithmetic mean of 10 and 20 is:",
+                options: ["10", "15", "20", "30"],
+                answer: "15"
+            },
+            {
+                question: "The mean of 5, 7, 9 is:",
+                options: ["6", "7", "8", "10"],
+                answer: "7"
+            },
+            {
+                question: "If mean of 4 numbers is 8, their total is:",
+                options: ["8", "12", "32", "64"],
+                answer: "32"
+            },
+            {
+                question: "The mean of first 5 natural numbers is:",
+                options: ["2", "3", "4", "5"],
+                answer: "3"
+            },
+            {
+                question: "The mean of 2, 4, 6, 8 is:",
+                options: ["4", "5", "6", "7"],
+                answer: "5"
+            },
+            {
+                question: "If each observation is increased by 5, then the mean",
+                options: ["Increased by 5", "Decreased by 5", "Same", "None"],
+                answer: "Increased by 5"
+            },
+            {
+                question: "Mean of 2, 3, 10, 15 is:",
+                options: ["7.5", "10", "5", "8"],
+                answer: "7.5"
+            },
+            {
+                question: "If all observations are multiplied by 3, then the mean is:",
+                options: ["Divided by 3", "same", "Multiplied by 3", "None"],
+                answer: "Multiplied by 3"
+            },
+            {
+                question: "Mean of 100, 200, 300 is:",
+                options: ["200", "300", "400", "600"],
+                answer: "200"
+            },
+            {
+                question: "The mean of x, x+2, x+4 is:",
+                options: ["x", "x+1", "x+2", "x+3"],
+                answer: "x+2"
+            },
+            {
+                question: "If mean of 5 observation is 6, sum is:",
+                options: ["6", "11", "30", "36"],
+                answer: "30"
+            },
+            {
+                question: "Mean of first 10 even natural numbers is:",
+                options: ["5", "10", "11", "9"],
+                answer: "11"
+            },
+            {
+                question: "Mean of 1, 2, 3, 4, 5, 6 is:",
+                options: ["3", "3.5", "4", "4.5"],
+                answer: "3.5"
+            },
+            {
+                question: "If mean of 20 items is 25, total sum is:",
+                options: ["25", "125", "500", "1000"],
+                answer: "500"
+            },
+            {
+                question: "The mean of the number 50, repeated 10 times is:",
+                options: ["5", "50", "500", "10"],
+                answer: "50"
+            },
+            {
+                question: "Which of the following is an example of continuous data?",
+                options: ["The number of pages in a book", "The temperature of a room", "The number of cars in a parking lot", "The number of pens sold today"],
+                answer: "The temperature of a room"
+            },
+            {
+                question: "Which of the following is an example of discrete data?",
+                options: ["The number of pages in a book", "The volume of water in a jar", "Height of an individual", "The amount of rain in a city"],
+                answer: "The number of pages in a book"
+            },
+            {
+                question: "The arithmetic mean is also known as the",
+                options: ["Middlemost value", "Most frequent value", "Average value", "Extremum value"],
+                answer: "Average value"
+            },
+            {
+                question: "If each observation in a data set is increased by a constant, the mean will:",
+                options: ["Increase by the same constant", "Remain unchanged", "Decrease by the same constant", "Become zero"],
+                answer: "Increase by the same constant"
+            },
+            {
+                question: "The arithmetic mean for data set is 12 and the number of observations is 4 then sum of the observations will be",
+                options: ["6", "4", "48", "3"],
+                answer: "48"
+            },
+            {
+                question: "Variance of 5, 5, 5, 5 is:",
+                options: ["0", "5", "10", "25"],
+                answer: "0"
+            },
+            {
+                question: "Standard deviation of 7, 7, 7 is:",
+                options: ["0", "7", "1", "21"],
+                answer: "0"
+            },
+            {
+                question: "Variance is always:",
+                options: ["Positive", "Negative", "Zero or Positive", "None"],
+                answer: "Zero or Positive"
+            },
+            {
+                question: "If each value is increased by 3, variance is:",
+                options: ["Increased by 3", "Decreased by 3", "Unchanged", "Zero"],
+                answer: "Unchanged"
+            },
+            {
+                question: "Variance of 1, 2, 3 is:",
+                options: ["0", "1", "2/3", "1.5"],
+                answer: "2/3"
+            },
+            {
+                question: "The positive square root of Variance is called",
+                options: ["Standard deviation", "Arithmetic mean", "variance", "none"],
+                answer: "Standard deviation"
+            },
+            {
+                question: "Variance of 2, 2, 2, 2 is:",
+                options: ["2", "0", "4", "1"],
+                answer: "0"
+            },
+            {
+                question: "The standard deviation of a data is 3. If each value is multiplied by 5 then the new variance is",
+                options: ["3", "5", "15", "225"],
+                answer: "15"
+            },
+            {
+                question: "Arithmetic mean of 10, 20, 30 is:",
+                options: ["10", "60", "20", "30"],
+                answer: "20"
+            },
+            {
+                question: "Which of the following is not a measure of dispersion?",
+                options: ["Standard deviation", "Arithmetic mean", "Variance", "None"],
+                answer: "Arithmetic mean"
+            },
+            {
+                question: "The probability that it will rain tomorrow is 0.82, then the probability that it will NOT rain tomorrow is",
+                options: ["0.28", "0.18", "0.81", "0.08"],
+                answer: "0.18"
+            },
+            {
+                question: "A number between 0 and 1 that is used to measure uncertainty is",
+                options: ["Random variable", "Trial", "Simple event", "Probability"],
+                answer: "Probability"
+            },
+            {
+                question: "Which of the following CANNOT be taken as probability of an event?",
+                options: ["0", "1", "-1", "0.5"],
+                answer: "-1"
+            },
+            {
+                question: "If the probability of success of an experiment is 0.4, what is the probability of failure?",
+                options: ["0.6", "0.4", "0", "0.3"],
+                answer: "0.6"
+            },
+            {
+                question: "The probability of getting a job for a person is $x/3$. If the probability of not getting the job is $2/3$, then the value of $x$ is",
+                options: ["1", "2", "3", "0"],
+                answer: "1"
+            },
+            {
+                question: "If a letter is chosen at random from the English alphabets {a,b,...,z}, then the probability that the letter chosen precedes x",
+                options: ["12/13", "1/13", "23/26", "3/26"],
+                answer: "23/26"
+            },
+            {
+                question: "The probability of getting a tail when a coin is tossed",
+                options: ["1", "1/4", "2/3", "1/2"],
+                answer: "1/2"
+            },
+            {
+                question: "The sum of probabilities of all elementary events in a sample space is:",
+                options: ["0", "Between 0 and 1", "1", "Infinite"],
+                answer: "1"
+            },
+            {
+                question: "If two events are mutually exclusive then,",
+                options: ["Both events can occur simultaneously", "Probability of their intersection is 0", "Probability of their intersection is 1", "They are independent"],
+                answer: "Probability of their intersection is 0"
+            },
+            {
+                question: "Which of the following is not correct?",
+                options: ["$P(A) > 1$", "$0 \\le P(A) \\le 1$", "$P(A) = 0$", "$P(A) = 1$"],
+                answer: "$P(A) > 1$"
+            },
+            {
+                question: "If A and B are any two events, A and B are exhaustive events if",
+                options: ["$P(A \\cup B) = 1$", "$P(A \\cup B) = 0$", "$P(A \\cap B) = 1$", "$P(A \\cap B) = 0$"],
+                answer: "$P(A \\cup B) = 1$"
+            },
+            {
+                question: "If A and B are any two events, A and B are mutually exclusive events if",
+                options: ["$P(A \\cup B) = 1$", "$P(A \\cup B) = 0$", "$P(A \\cap B) = 1$", "$P(A \\cap B) = 0$"],
+                answer: "$P(A \\cap B) = 0$"
+            },
+            {
+                question: "The probability of the event E, $P(E)$, is defined as",
+                options: ["$n(E) / n(S)$", "$n(E) \\times n(S)$", "$n(S) / n(E)$", "$n(E) + n(S)$"],
+                answer: "$n(E) / n(S)$"
+            },
+            {
+                question: "A die is rolled 'n' times, $n(S) = $",
+                options: ["$6n$", "$n^6$", "$6^n$", "$6+n$"],
+                answer: "$6^n$"
+            },
+            {
+                question: "When 'n' coins are tossed together, then $n(S) = $",
+                options: ["$2n$", "$n^2$", "$2^n$", "$2+n$"],
+                answer: "$2^n$"
+            },
+            {
+                question: "If A and B are two events , then $P(A \\cup B) = $",
+                options: ["$P(A) + P(B)$", "$P(A) + P(B) - P(A \\cap B)$", "$P(A) - P(B)$", "$P(A) + P(B) + P(A \\cap B)$"],
+                answer: "$P(A) + P(B) - P(A \\cap B)$"
+            },
+            {
+                question: "If $P(A) = 0.42$, then $P(\\overline{A}) = $",
+                options: ["0.42", "0.48", "0.52", "0.58"],
+                answer: "0.58"
+            },
+            {
+                question: "If $P(A) = 3/10$, then $P(\\overline{A}) = $",
+                options: ["3/10", "5/10", "7/10", "9/10"],
+                answer: "7/10"
+            },
+            {
+                question: "If A and B are any two events, then $P(A \\cap B) = $",
+                options: ["$P(A) P(B|A)$", "$P(A) + P(B)$", "$P(A) P(B)$", "$P(A) / P(B)$"],
+                answer: "$P(A) P(B|A)$"
+            },
+            {
+                question: "If A and B are any two events, then $P(B|A) = $",
+                options: ["$\\frac{P(A \\cap B)}{P(A)}$", "$P(A \\cap B) \\times P(A)$", "$\\frac{P(A \\cap B)}{P(B)}$", "$P(A \\cup B)$"],
+                answer: "$\\frac{P(A \\cap B)}{P(A)}$"
+            },
+            {
+                question: "The probability of an event that is certain to happen is:",
+                options: ["0", "1", "1/2", "Infinite"],
+                answer: "1"
+            },
+            {
+                question: "The probability of an impossible event is:",
+                options: ["0", "1", "Between 0 and 1", "Infinite"],
+                answer: "0"
+            },
+            {
+                question: "If a die is rolled, the probability of getting an even number is:",
+                options: ["1/2", "1/3", "2/3", "1/4"],
+                answer: "1/2"
+            },
+            {
+                question: "If a coin is tossed, the probability of getting a head is:",
+                options: ["1/4", "1/3", "1/2", "1"],
+                answer: "1/2"
+            },
+            {
+                question: "The sum of probabilities of all possible outcomes of an experiment is:",
+                options: ["0", "1", "1/2", "Depends on sample space"],
+                answer: "1"
+            },
+            {
+                question: "Probability lies between",
+                options: ["-1 and 1", "0 and 1", "0 and n", "0 and $\\infty$"],
+                answer: "0 and 1"
+            },
+            {
+                question: "If a die is rolled, the probability of getting 3 is:",
+                options: ["1/6", "1/2", "3/6", "1/3"],
+                answer: "1/6"
+            },
+            {
+                question: "If A is any event in S and its complement is $\\overline{A}$ then, $P(\\overline{A})$ is equal to",
+                options: ["$1 - P(A)$", "$P(A) - 1$", "$P(A)$", "0"],
+                answer: "$1 - P(A)$"
+            },
+            {
+                question: "If $P(A) = 0.2$, $P(B) = 0.3$, A and B are independent, then $P(A \\cap B) = $",
+                options: ["0.05", "0.5", "0.06", "0.6"],
+                answer: "0.06"
+            },
+            {
+                question: "In tossing two coins, the probability of getting exactly one head is:",
+                options: ["1/4", "3/4", "1/2", "2/3"],
+                answer: "1/2"
+            },
+            {
+                question: "The probability of selecting an even number from 1 to 10 is:",
+                options: ["1/2", "1/3", "2/3", "1/5"],
+                answer: "1/2"
+            },
+            {
+                question: "If $P(A) = 0.4$, $P(B) = 0.5$, A and B are independent, then $P(A \\cap B) = $",
+                options: ["0.2", "0.9", "0.1", "0.5"],
+                answer: "0.2"
+            },
+            {
+                question: "If $P(A) = 0.7$, then $P(\\overline{A}) = $",
+                options: ["0.7", "0.3", "1.7", "0"],
+                answer: "0.3"
+            },
+            {
+                question: "The probability of drawing an ace from a deck is:",
+                options: ["1/13", "1/52", "1/4", "1/12"],
+                answer: "1/13"
+            },
+            {
+                question: "A page is selected at random from a book. The probability that the digit at units place of the page number chosen is less than 7 is",
+                options: ["3/10", "7/10", "3/9", "7/9"],
+                answer: "7/10"
+            },
+            {
+                question: "If $P(A) = 0.5$, $P(B) = 0.4$, A and B are mutually exclusive, then $P(A \\cup B) = $",
+                options: ["0.9", "0.2", "1", "0.1"],
+                answer: "0.9"
+            },
+            {
+                question: "A purse contains 10 notes of ₹2000, 15 notes of ₹500, and 25 notes of ₹200. One note is drawn at random. What is the probability that the note is a ₹200 note?",
+                options: ["1/5", "3/10", "1/2", "4/5"],
+                answer: "1/2"
+            },
+            {
+                question: "The number of elements in the sample space when two coins are tossed is",
+                options: ["6", "4", "8", "2"],
+                answer: "8"
+            },
+            {
+                question: "The set of all possible outcomes is called _____________",
+                options: ["Event", "Sample point", "Trail", "Sample space"],
+                answer: "Sample space"
+            },
+            {
+                question: "Two dice are rolled. Probability that the sum is 2 is",
+                options: ["1/12", "1/18", "1/36", "1/6"],
+                answer: "1/36"
+            },
+            {
+                question: "Which of the following is true?",
+                options: ["$P(A|B) = P(B|A)$", "$P(\\overline{A}) = 1 + P(A)$", "$P(A \\cup B) \\le P(A) + P(B)$", "$P(A \\cap B) = P(A) + P(B)$"],
+                answer: "$P(A \\cup B) \\le P(A) + P(B)$"
+            },
+            {
+                question: "If two or more events has an equal chance of occurring, then it is said to be",
+                options: ["equally likely events", "Complementary events", "exclusive events", "exhaustive events"],
+                answer: "equally likely events"
+            },
+            {
+                question: "If A and B are two events such that, then 'A or B' is represented by",
+                options: ["$A \\cup B$", "$A \\cap B$", "$A - B$", "$B - A$"],
+                answer: "$A \\cup B$"
+            },
+            {
+                question: "If A and B are two events such that, then 'A and B' is represented by",
+                options: ["$A \\cup B$", "$A \\cap B$", "$A - B$", "$B - A$"],
+                answer: "$A \\cap B$"
+            },
+            {
+                question: "If A and B are mutually exclusive events, then $P(A \\cup B) = $",
+                options: ["$P(A) + P(B)$", "$P(A) - P(B)$", "$P(A) \\times P(B)$", "$P(A) / P(B)$"],
+                answer: "$P(A) + P(B)$"
+            },
+            {
+                question: "The number of elements in the sample space when tossing three coins are",
+                options: ["3", "6", "8", "9"],
+                answer: "8"
+            },
+            {
+                question: "The number of elements in the sample space when throwing two dice is",
+                options: ["6", "12", "24", "36"],
+                answer: "36"
+            },
+            {
+                question: "Which of the following is NOT true?",
+                options: ["$P(S) = 1$", "$0 \\le P(A) \\le 1$", "$P(\\emptyset) = 0$", "$P(A) = 1 + P(\\overline{A})$"],
+                answer: "$P(A) = 1 + P(\\overline{A})$"
+            },
+            {
+                question: "A card is picked randomly from a pack of 52 cards. the probability of getting a queen card is",
+                options: ["4/13", "3/52", "1/13", "5/52"],
+                answer: "1/13"
+            },
+            {
+                question: "The probability of a certain event A is",
+                options: ["1", "3", "0", "2"],
+                answer: "1"
+            }
+        ];
+
+        // --- Quiz Engine Logic ---
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let selectedAnswer = null;
+
+        const quizContentEl = document.getElementById('quiz-content');
+        const resultsContainerEl = document.getElementById('results-container');
+        const questionNumberEl = document.getElementById('question-number');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainerEl = document.getElementById('options-container');
+        const feedbackEl = document.getElementById('feedback');
+        const nextBtn = document.getElementById('next-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const progressBar = document.getElementById('progress-bar');
+        const scoreTextEl = document.getElementById('score-text');
+        const percentageTextEl = document.getElementById('percentage-text');
+
+        function startQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            quizContentEl.style.display = 'block';
+            resultsContainerEl.style.display = 'none';
+            nextBtn.style.display = 'none';
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            // Reset from previous question
+            optionsContainerEl.innerHTML = '';
+            feedbackEl.textContent = '';
+            nextBtn.style.display = 'none';
+            selectedAnswer = null;
+
+            if (currentQuestionIndex >= questions.length) {
+                showResults();
+                return;
+            }
+
+            const question = questions[currentQuestionIndex];
+            
+            // Update Progress
+            const progressPercentage = ((currentQuestionIndex) / questions.length) * 100;
+            progressBar.style.width = progressPercentage + '%';
+            questionNumberEl.textContent = `Question ${currentQuestionIndex + 1} of ${questions.length}`;
+            
+            // Set question text
+            questionTextEl.innerHTML = question.question;
+
+            // Create option buttons
+            question.options.forEach(option => {
+                const button = document.createElement('button');
+                button.innerHTML = option;
+                button.classList.add('option-btn');
+                button.addEventListener('click', () => selectAnswer(button, option, question.answer));
+                optionsContainerEl.appendChild(button);
+            });
+
+            // Re-render MathJax formulas
+            if (window.MathJax) {
+                MathJax.typesetPromise([questionTextEl, optionsContainerEl]).catch((err) => console.log('MathJax error: ', err));
+            }
+        }
+
+        function selectAnswer(button, selectedOption, correctAnswer) {
+            if (selectedAnswer) return; // Prevent changing answer
+            selectedAnswer = selectedOption;
+
+            const allOptions = optionsContainerEl.querySelectorAll('.option-btn');
+            allOptions.forEach(btn => {
+                btn.disabled = true; // Disable all buttons
+                
+                // Find the correct answer button to highlight
+                if (btn.innerHTML === correctAnswer) {
+                    btn.classList.add('correct');
+                }
+            });
+
+            if (selectedOption === correctAnswer) {
+                score++;
+                feedbackEl.textContent = 'Correct!';
+                feedbackEl.style.color = 'green';
+            } else {
+                button.classList.add('incorrect'); // Mark the selected wrong answer
+                feedbackEl.textContent = 'Incorrect.';
+                feedbackEl.style.color = 'red';
+            }
+
+            nextBtn.style.display = 'block'; // Show next button
+        }
+
+        function showResults() {
+            quizContentEl.style.display = 'none';
+            resultsContainerEl.style.display = 'block';
+            
+            const percentage = ((score / questions.length) * 100).toFixed(1);
+            scoreTextEl.textContent = `You scored ${score} out of ${questions.length}!`;
+            percentageTextEl.textContent = `That's ${percentage}%`;
+        }
+
+        // Event Listeners
+        nextBtn.addEventListener('click', () => {
+            currentQuestionIndex++;
+            loadQuestion();
+        });
+
+        restartBtn.addEventListener('click', startQuiz);
+
+        // Start the quiz on load
+        startQuiz();
+
+    </script>
+</body>
+</html>
